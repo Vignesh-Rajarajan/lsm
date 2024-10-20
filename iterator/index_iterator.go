@@ -51,12 +51,12 @@ func (i IndexIterator) Compare(j IndexIterator) bool {
 	return comparison < 0
 }
 
-type MergeInterator struct {
+type MergeIterator struct {
 	current   IndexIterator
 	iterators *MinHeapIndexIterator
 }
 
-func NewMergeIterator(iterators []Iterator) *MergeInterator {
+func NewMergeIterator(iterators []Iterator) *MergeIterator {
 	minHeap := &MinHeapIndexIterator{}
 	heap.Init(minHeap)
 
@@ -66,50 +66,45 @@ func NewMergeIterator(iterators []Iterator) *MergeInterator {
 		}
 	}
 
-	return &MergeInterator{
+	return &MergeIterator{
 		current:   heap.Pop(minHeap).(IndexIterator),
 		iterators: minHeap,
 	}
 }
 
-func (it *MergeInterator) Key() entries.Key {
+func (it *MergeIterator) Key() entries.Key {
 	return it.current.Key()
 }
 
-func (it *MergeInterator) Value() entries.Value {
+func (it *MergeIterator) Value() entries.Value {
 	return it.current.Value()
 }
 
-func (it *MergeInterator) IsValid() bool {
+func (it *MergeIterator) IsValid() bool {
 	return it.current.IsValid()
 }
 
-func (it *MergeInterator) Next() bool {
+// Next advances the MergeIterator to the next valid key-value pair. It returns true if the
+// iterator was successfully advanced, and false if there are no more valid key-value pairs.
+// Next() will return false if any of the underlying iterators become invalid.
+func (it *MergeIterator) Next() bool {
 	curr := it.current
 	for _, iter := range *it.iterators {
-		if curr.Key().Compare(iter.Key()) == 0 {
-			if !iter.Next() {
-				heap.Pop(it.iterators)
-				return false
-			}
-
-			if !iter.IsValid() {
-				heap.Pop(it.iterators)
-			}
-		} else {
+		if curr.Key().Compare(iter.Key()) != 0 {
 			break
+		}
+		if !iter.Next() || !iter.IsValid() {
+			heap.Pop(it.iterators)
+			return false
 		}
 	}
 
-	if !curr.Next() {
-		return false
-	}
-
-	if !curr.IsValid() {
+	if !curr.Next() || !curr.IsValid() {
 		if it.iterators.Len() > 0 {
 			it.current = heap.Pop(it.iterators).(IndexIterator)
 			return true
 		}
+		return false
 	}
 
 	if it.iterators.Len() > 0 {
