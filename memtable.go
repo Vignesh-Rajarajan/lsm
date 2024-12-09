@@ -5,6 +5,7 @@ import (
 	"github.com/huandu/skiplist"
 	"lsm/entries"
 	"lsm/iterator"
+	"lsm/txn"
 	"sync/atomic"
 )
 
@@ -51,6 +52,23 @@ func (m *MemTable) Delete(key entries.Key) {
 	m.Set(key, entries.EmptyValue)
 }
 
-func (m *MemTable) ScanInclusive(start, end entries.Key) *iterator.MemTableIterator {
-	return iterator.NewMemtableIterator(m.entries.Find(start), end)
+func (m *MemTable) Scan(inclusive txn.InclusiveRange) *iterator.MemTableIterator {
+	return iterator.NewMemtableIterator(m.entries.Find(inclusive.Start()), inclusive.End())
+}
+
+type MemtableIterator struct {
+	element *skiplist.Element
+	end     entries.Key
+}
+
+func (m *MemtableIterator) Key() entries.Key {
+	return m.element.Key().(entries.Key)
+}
+
+func (m *MemtableIterator) Value() entries.Value {
+	return m.element.Value.(entries.Value)
+}
+
+func (m *MemtableIterator) IsValid() bool {
+	return m.element != nil && m.element.Key().(entries.Key).Compare(m.end) <= 0
 }

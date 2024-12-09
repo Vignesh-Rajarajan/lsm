@@ -4,10 +4,6 @@ type Value struct {
 	Value []byte
 }
 
-func (val Value) IsEmpty() bool {
-	return val.Value == nil
-}
-
 var EmptyValue = Value{}
 
 func NewValue(value []byte) *Value {
@@ -20,4 +16,8 @@ func (val Value) String() string {
 
 func NewStringValue(value string) Value {
 	return Value{Value: []byte(value)}
+}
+
+func (val Value) IsEmpty() bool {
+	return len(val.Value) == 0
 }

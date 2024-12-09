@@ -14,6 +14,10 @@ func (k Key) IsLessThanOrEqual(key Key) bool {
 	return bytes.Compare(k.Key, key.Key) <= 0
 }
 
+func (k Key) EqualTo(key Key) bool {
+	return bytes.Compare(k.Key, key.Key) == 0
+}
+
 func (k Key) Compare(key Key) int {
 	return bytes.Compare(k.Key, key.Key)
 }

@@ -1,6 +1,10 @@
 package main
 
-import "lsm/entries"
+import (
+	"lsm/entries"
+	"lsm/iterator"
+	"lsm/txn"
+)
 
 type StorageOptions struct {
 	memTableSize uint64
@@ -56,10 +60,31 @@ func (s *StorageState) Set(batch *entries.Batch) {
 func (s *StorageState) couldFreezeMemtable() {
 	if s.memtable.Size() >= s.options.memTableSize {
 		s.immutableMemtables = append(s.immutableMemtables, s.memtable)
-		s.memtable = NewMemTable(s.memtable.id + 1)
+		s.memtable = NewMemTable(1)
+	}
+}
+
+func (s *StorageState) forceFreezeMemtable() {
+	if !s.memtable.IsEmpty() {
+		s.immutableMemtables = append(s.immutableMemtables, s.memtable)
+		s.memtable = NewMemTable(1)
 	}
 }
 
 func (s *StorageState) HasImmutableTables() bool {
 	return len(s.immutableMemtables) > 0
+}
+
+func (s *StorageState) Scan(inclusiveRange txn.InclusiveRange) iterator.Iterator {
+
+	iterators := make([]iterator.Iterator, len(s.immutableMemtables)+1)
+	iterators[0] = s.memtable.Scan(inclusiveRange)
+	index := 1
+
+	for immutableMemIndex := len(s.immutableMemtables) - 1; immutableMemIndex >= 0; immutableMemIndex-- {
+		iterators[index] = s.immutableMemtables[immutableMemIndex].Scan(inclusiveRange)
+		index++
+	}
+
+	return iterator.NewMergeIterator(iterators)
 }

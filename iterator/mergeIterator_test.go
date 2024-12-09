@@ -94,3 +94,43 @@ func TestMergeIterator_MultipleIteratorHavingSameKey(t *testing.T) {
 	assert.Equal(t, "test", string(merge.Key().Key))
 	assert.Equal(t, "test", string(merge.Value().Value))
 }
+
+func TestIndexIterator(t *testing.T) {
+	idIteratorOne := NewIndexIterator(0, newTestIterator(
+		[]entries.Key{entries.NewStringKey("a")},
+		[]entries.Value{entries.NewStringValue("1")},
+	))
+
+	idIteratorTwo := NewIndexIterator(0, newTestIterator(
+		[]entries.Key{entries.NewStringKey("b")},
+		[]entries.Value{entries.NewStringValue("2")},
+	))
+
+	assert.True(t, idIteratorOne.Compare(idIteratorTwo))
+
+	idIteratorOne = NewIndexIterator(0, newTestIterator(
+		[]entries.Key{entries.NewStringKey("a")},
+		[]entries.Value{entries.NewStringValue("1")},
+	))
+
+	idIteratorTwo = NewIndexIterator(0, newTestIterator(
+		[]entries.Key{entries.NewStringKey("a")},
+		[]entries.Value{entries.NewStringValue("2")},
+	))
+
+	assert.False(t, idIteratorOne.Compare(idIteratorTwo))
+}
+
+func TestMergeIterator_InValid(t *testing.T) {
+	iterator :=
+		newTestIterator([]entries.Key{entries.NewStringKey("a"),
+			entries.NewStringKey("b")},
+			[]entries.Value{
+				entries.NewStringValue("1"),
+				entries.NewStringValue("2"),
+			})
+	iterator.index = 2
+	merge := NewMergeIterator([]Iterator{iterator})
+	assert.False(t, merge.IsValid())
+
+}

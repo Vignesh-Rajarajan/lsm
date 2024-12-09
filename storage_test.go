@@ -3,6 +3,7 @@ package main
 import (
 	"github.com/stretchr/testify/assert"
 	"lsm/entries"
+	"lsm/txn"
 	"testing"
 )
 
@@ -61,4 +62,44 @@ func TestNewStorageStateWithOptions(t *testing.T) {
 	value, ok := state.Get(entries.NewStringKey("SOCK_STREAM"))
 	assert.True(t, ok)
 	assert.Equal(t, "Stream Sockets", string(value.Value))
+}
+
+func TestStorageState_Scan(t *testing.T) {
+	state := NewStorageState()
+	batch := entries.NewBatch()
+	batch.Put(entries.NewStringKey("consensus"), entries.NewStringValue("value1"))
+	batch.Put(entries.NewStringKey("storage"), entries.NewStringValue("value2"))
+	batch.Put(entries.NewStringKey("data-structure"), entries.NewStringValue("value3"))
+	state.Set(batch)
+
+	iterator := state.Scan(txn.NewInclusiveRange(entries.NewStringKey("accurate"), entries.NewStringKey("etcd")))
+	assert.True(t, iterator.IsValid())
+	assert.Equal(t, "consensus", string(iterator.Key().Key))
+	assert.Equal(t, "value1", string(iterator.Value().Value))
+	iterator.Next()
+	assert.True(t, iterator.IsValid())
+	assert.Equal(t, "data-structure", string(iterator.Key().Key))
+	assert.Equal(t, "value3", string(iterator.Value().Value))
+	iterator.Next()
+	assert.False(t, iterator.IsValid())
+}
+
+func TestStorageState_Scan_Inclusive(t *testing.T) {
+	state := NewStorageState()
+	batch := entries.NewBatch()
+	batch.Put(entries.NewStringKey("consensus"), entries.NewStringValue("value1"))
+	batch.Put(entries.NewStringKey("storage"), entries.NewStringValue("value2"))
+	batch.Put(entries.NewStringKey("data-structure"), entries.NewStringValue("value3"))
+	state.Set(batch)
+
+	iterator := state.Scan(txn.NewInclusiveRange(entries.NewStringKey("accurate"), entries.NewStringKey("data-structure")))
+	assert.True(t, iterator.IsValid())
+	assert.Equal(t, "consensus", string(iterator.Key().Key))
+	assert.Equal(t, "value1", string(iterator.Value().Value))
+	iterator.Next()
+	assert.True(t, iterator.IsValid())
+	assert.Equal(t, "data-structure", string(iterator.Key().Key))
+	assert.Equal(t, "value3", string(iterator.Value().Value))
+	iterator.Next()
+	assert.False(t, iterator.IsValid())
 }

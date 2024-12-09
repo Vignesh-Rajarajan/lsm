@@ -3,6 +3,7 @@ package main
 import (
 	"github.com/stretchr/testify/assert"
 	"lsm/entries"
+	"lsm/txn"
 	"testing"
 )
 
@@ -35,13 +36,13 @@ func TestMemtable_ScanInclusive(t *testing.T) {
 	memtable.Set(entries.NewStringKey("key2"), entries.NewStringValue("value2"))
 	memtable.Set(entries.NewStringKey("key3"), entries.NewStringValue("value3"))
 
-	iterator := memtable.ScanInclusive(entries.NewStringKey("key2"), entries.NewStringKey("key2"))
+	iterator := memtable.Scan(txn.NewInclusiveRange(entries.NewStringKey("key2"), entries.NewStringKey("key2")))
 	assert.True(t, iterator.IsValid())
 	assert.Equal(t, "value2", string(iterator.Value().Value))
 	iterator.Next()
 	assert.False(t, iterator.IsValid())
 
-	iterator = memtable.ScanInclusive(entries.NewStringKey("key2"), entries.NewStringKey("key6"))
+	iterator = memtable.Scan(txn.NewInclusiveRange(entries.NewStringKey("key2"), entries.NewStringKey("key6")))
 	assert.True(t, iterator.IsValid())
 	assert.Equal(t, "value2", string(iterator.Value().Value))
 	iterator.Next()
