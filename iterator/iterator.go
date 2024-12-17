@@ -39,7 +39,7 @@ func (it *MemTableIterator) Next() bool {
 		return false
 	}
 	key := el.Key().(entries.Key)
-	if key.IsLessThanOrEqual(it.endKey) {
+	if key.IsLessThanOrEqualTo(it.endKey) {
 		it.element = el
 		return true
 	}

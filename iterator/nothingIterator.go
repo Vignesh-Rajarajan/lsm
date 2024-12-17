@@ -12,7 +12,7 @@ func (it NothingIterator) Next() bool {
 }
 
 func (it NothingIterator) Key() entries.Key {
-	return *entries.NewKey(nil)
+	return entries.NewKey(nil, 0)
 }
 
 func (it NothingIterator) Value() entries.Value {
