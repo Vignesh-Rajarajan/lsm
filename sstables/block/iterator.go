@@ -24,6 +24,13 @@ func (it *Iterator) IsValid() bool {
 	return it.key.RawKeySize() > 0
 }
 
+func (it *Iterator) Close() {
+	it.key = entries.EmptyKey
+	it.value = entries.EmptyValue
+	it.offsetIdx = 0
+	it.block = Block{}
+}
+
 func (it *Iterator) Next() error {
 	it.offsetIdx++
 	it.seekToOffsetIndex(it.offsetIdx)
@@ -42,9 +49,11 @@ func (it *Iterator) seekToOffsetIndex(offsetIdx uint16) {
 	it.seekToOffset(keyValueBeginOffset)
 }
 
-func (it *Iterator) seekToOffset(offset uint16) {
-	data := it.block.data[offset:]
-	keySize := binary.LittleEndian.Uint16(it.block.data[:])
+func (it *Iterator) seekToOffset(kvBeginOffset uint16) {
+	data := it.block.data[kvBeginOffset:]
+
+	keySize := binary.LittleEndian.Uint16(data[:])
+
 	key := entries.DecodeFrom(data[ReservedKeySize : uint16(ReservedKeySize)+keySize])
 
 	valueSize := binary.LittleEndian.Uint16(data[ReservedKeySize+key.EncodedKeySizeInBytes():])
@@ -73,5 +82,5 @@ func (it *Iterator) seekToEqualOrGreater(key entries.Key) {
 			high = mid - 1
 		}
 	}
-	it.seekToOffset(uint16(low))
+	it.seekToOffsetIndex(uint16(low))
 }

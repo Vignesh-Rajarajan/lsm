@@ -33,6 +33,10 @@ func NewKey(key []byte, timestamp uint64) Key {
 	return Key{Key: key, timestamp: timestamp}
 }
 
+func NewStringKeyWithTimestamp(key string, timestamp uint64) Key {
+	return Key{Key: []byte(key), timestamp: timestamp}
+}
+
 func (k Key) IsLessThanOrEqualTo(key Key) bool {
 	cmp := bytes.Compare(k.Key, key.Key)
 	if cmp == 0 {
@@ -53,7 +57,7 @@ func (k Key) String() string {
 	return string(k.Key)
 }
 
-func (k Key) CompareKeysWithDecendingTimestamp(otherKey Key) int {
+func (k Key) CompareKeysWithDescendingTimestamp(otherKey Key) int {
 	comparison := bytes.Compare(k.Key, otherKey.Key)
 	if comparison != 0 {
 		return comparison
@@ -73,7 +77,7 @@ func NewStringKey(key string) Key {
 }
 
 func CompareKeys(key1 Key, key2 Key) int {
-	return key1.CompareKeysWithDecendingTimestamp(key2)
+	return key1.CompareKeysWithDescendingTimestamp(key2)
 }
 
 func (k Key) isRawKeyEqual(key Key) bool {

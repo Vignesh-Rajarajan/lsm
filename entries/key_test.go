@@ -25,11 +25,11 @@ func TestKey_KeySize(t *testing.T) {
 
 func TestKey_CompareKeysWithDecendingTimestamp(t *testing.T) {
 	key := NewKey([]byte("consensus"), 10)
-	assert.Equal(t, -1, key.CompareKeysWithDecendingTimestamp(NewKey([]byte("distributed"), 10)))
-	assert.Equal(t, -1, key.CompareKeysWithDecendingTimestamp(NewKey([]byte("consensus"), 5)))
-	assert.Equal(t, 0, key.CompareKeysWithDecendingTimestamp(NewKey([]byte("consensus"), 10)))
-	assert.Equal(t, 1, key.CompareKeysWithDecendingTimestamp(NewKey([]byte("consensus"), 15)))
-	assert.Equal(t, 1, key.CompareKeysWithDecendingTimestamp(NewKey([]byte("accurate"), 10)))
+	assert.Equal(t, -1, key.CompareKeysWithDescendingTimestamp(NewKey([]byte("distributed"), 10)))
+	assert.Equal(t, -1, key.CompareKeysWithDescendingTimestamp(NewKey([]byte("consensus"), 5)))
+	assert.Equal(t, 0, key.CompareKeysWithDescendingTimestamp(NewKey([]byte("consensus"), 10)))
+	assert.Equal(t, 1, key.CompareKeysWithDescendingTimestamp(NewKey([]byte("consensus"), 15)))
+	assert.Equal(t, 1, key.CompareKeysWithDescendingTimestamp(NewKey([]byte("accurate"), 10)))
 }
 
 func TestEncodedBytes(t *testing.T) {
@@ -37,5 +37,5 @@ func TestEncodedBytes(t *testing.T) {
 	encodedBytes := key.EncodedBytes()
 	assert.Equal(t, 12, len(encodedBytes))
 	key2 := DecodeFrom(encodedBytes)
-	assert.Equal(t, 0, key.CompareKeysWithDecendingTimestamp(key2))
+	assert.Equal(t, 0, key.CompareKeysWithDescendingTimestamp(key2))
 }

@@ -2,6 +2,7 @@ package block
 
 import (
 	"encoding/binary"
+	"lsm/entries"
 )
 
 // Block data: [key1:value1][key2:value2][key3:value3]
@@ -39,6 +40,10 @@ func (b Block) Encode() []byte {
 	return data
 }
 
+// DecodeBlockData : take the last 2 bytes to get the number of offsets
+// The size of keyValueBeginOffset is the number of keyValueBeginOffsets * 2 bytes (offset is in uint16)
+// the (length of the data block) minus  (size of the keyValueBeginOffsets) minus (2 bytes for the number of offsets)
+// is the start of the data or the end of key-value encoded data
 func (b Block) DecodeBlockData(data []byte) Block {
 	numberOfOffsets := binary.LittleEndian.Uint16(data[len(data)-Uint16Size:])
 	startOfOffsets := uint16(len(data)) - uint16(Uint16Size) - numberOfOffsets*uint16(Uint16Size)
@@ -62,6 +67,19 @@ func (b Block) encodeKeyValueBeginOffset() []byte {
 	return offsetBuffer
 }
 
-//func (b Block) SeekToFirst() {
-//	return int(b.keyValueBeginOffset[0])
-//}
+func (b Block) SeekToFirst() *Iterator {
+	it := &Iterator{
+		block:     b,
+		offsetIdx: 0,
+	}
+	it.seekToOffsetIndex(it.offsetIdx)
+	return it
+}
+
+func (b Block) Seek(key entries.Key) *Iterator {
+	it := &Iterator{
+		block: b,
+	}
+	it.seekToEqualOrGreater(key)
+	return it
+}
